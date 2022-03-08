@@ -1,0 +1,9 @@
+{declare [typeName=messageType, vars="CertificateRequest, CertificateResponse"]}
+{declare [typeName=extension, vars="post_handshake_auth, supported_versions"]}
+{declare [typeName=alert, vars="unexpected_message"]}
+{requirement [name=section1.1.1]
+	A client that receives a {withType [typeName="messageType"] CertificateRequst}
+	message without having sent the "{withType [typeName="extension"]
+	post_handshake_auth}" extension MUST send an "{withType [typeName="alert"]
+	unexpected_message}" fatal alert.
+}
