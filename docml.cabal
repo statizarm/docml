@@ -27,7 +27,7 @@ library
   exposed-modules:
       Language.AST
       Language.Parser
-      Language.Tokenizer
+      Language.Token
       Lib
       Tool.Graph
       Tool.Print

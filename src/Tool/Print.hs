@@ -1,4 +1,4 @@
-module Print where
+module Tool.Print where
 
 import Language.AST
 

@@ -3,7 +3,7 @@ module Language.Parser (
     parse
 ) where
 
-import Language.Tokenizer
+import Language.Token
 import Language.AST
 
 import Prelude hiding (until)

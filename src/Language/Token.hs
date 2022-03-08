@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Language.Tokenizer where
+module Language.Token where
 
 import Text.Parsec
 import Text.Parsec.Char
