@@ -1,14 +1,14 @@
-/enum [name=LIGHTS, values="GREEN, YELLOW, RED"]/
-/requirement
-	/switch
-		/case [expr="GREEN"]
+{enum [name=LIGHTS, values="GREEN, YELLOW, RED"]}
+{requirement
+	{switch
+		{case [expr="GREEN"]
 			Если на световоре зеленый, то тебе следует удерживать скорость
-		/
-		/case [expr="YELLOW"]
+		}
+		{case [expr="YELLOW"]
 			Если на светофоре желтый тебе следует сбавить скорость или ускориться
-		/
-		/case [expr="RED"]
+		}
+		{case [expr="RED"]
 			Если на светофоре красный, тебе следует стоять
-		/
-	/
-/
+		}
+	}
+}

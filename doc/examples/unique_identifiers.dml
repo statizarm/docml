@@ -1,20 +1,20 @@
-/declare messageType CertificateRequest, CertificateResponse/
-/declare extension post_handshake_auth, supported_versions/
-/declare alert unexpected_message/
-/requirement [name=section1.1.1]
-	A client that receives a /withType messageType CertificateRequst/
-	message without having sent the "/withType extension
-	post_handshake_auth/" extension MUST send an "/withType alert
-	unexpected_message/" fatal alert.
-/
+{declare [typeName=messageType, vars="CertificateRequest, CertificateResponse"]}
+{declare [typeName=extension, vars="post_handshake_auth, supported_versions"]}
+{declare [typeName=alert vars="unexpected_message"]}
+{requirement [name="section1.1.1"]
+	A client that receives a {withType messageType CertificateRequst}
+	message without having sent the "{withType [typeName="extension"]
+	post_handshake_auth}" extension MUST send an "{withType [typeName="alert"]
+	unexpected_message}" fatal alert.
+}
 
-/requirement [name=section1.1.1]
+{requirement [name="section1.1.1"]
 	The server's extensions MUST contain "supported_versions".
 	Additionally, it SHOULD contain the minimal set of extensions
 	necessary for the client to generate a correct ClientHello pair.
 	with the ServerHello, a HelloRetryRequest MUST NOT contain any
 	extensions that were not first offered by the client in its
 	ClientHello, with the exception of optionally the "cookie" (see
-	\link section1.1.1\) extension.
-/
+	{link [id="section1.1.1"}) extension.
+}
 

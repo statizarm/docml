@@ -1,6 +1,9 @@
 module Main where
 
-import Lib
+import Language.Parser
+import Tool.Graph
+
+import System.IO
 
 main :: IO ()
-main = someFunc
+main = getContents >>= parse >>= print
