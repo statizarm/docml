@@ -1,0 +1,10 @@
+/declare messageType CertificateRequest, CertificateResponse/
+/declare extension post_handshake_auth, supported_versions/
+/declare alert unexpected_message,…/
+/requirement [name=section1.1.1]
+	A client that receives a /withType messageType CertificateRequst/
+	message without having sent the "/withType extension
+	post_handshake_auth/" extension MUST send an "/withType alert
+	unexpected_message/" fatal alert.
+/
+
