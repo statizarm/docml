@@ -14,10 +14,10 @@ import Data.Functor
 
 import Data.Map (fromList)
 
-text :: Stream s m Char => ParsecT s u m AST
-text = TextNode <$> many1 (satisfy (\x -> x /= '{' && x /= '}'))
+text :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
+text = textNode <$> many1 (satisfy (\x -> x /= '{' && x /= '}'))
 
-body :: Stream s m Char => ParsecT s u m [AST]
+body :: Stream s m Char => ParsecT s u m [AST LabeledNodeData]
 body = many (node <|> text)
 
 tag :: Stream s m Char => ParsecT s u m String 
@@ -35,10 +35,10 @@ keyValue = (,) <$> key <* eq <*> value
         value = spaces $> getValue <*> valueToken
         eq = spaces <* equals
 
-node :: Stream s m Char => ParsecT s u m AST
+node :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
 node = between blockOpenBrace blockCloseBrace node'
     where
-        node' = LabelNode <$> tag <*> (fromList <$> args) <*> body
+        node' = labelNode <$> tag <*> args <*> body
 
-parse :: Stream s m Char => s -> m (Either ParseError AST)
+parse :: Stream s m Char => s -> m (Either ParseError (AST LabeledNodeData))
 parse = runParserT (RootNode <$> body) () ""

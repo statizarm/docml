@@ -4,5 +4,5 @@ module Tool.Graph (
 
 import Language.AST
 
-toDot :: AST -> a
+toDot :: AST LabeledNodeData -> a
 toDot = undefined

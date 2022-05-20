@@ -2,5 +2,5 @@ module Tool.Print where
 
 import Language.AST
 
-rawPrint :: AST -> String
+rawPrint :: AST LabeledNodeData -> String
 rawPrint = show
