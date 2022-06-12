@@ -1,4 +1,6 @@
-module Tool.Unique where
+module Tool.Unique (
+    UniqueOptions(..),
+) where
 
 
 import Control.Monad.State
@@ -7,6 +9,10 @@ import Language.AST
 
 import qualified Data.Map.Lazy as Map
 import Data.Semigroup (Semigroup)
+
+
+data UniqueOptions = UniqueOptions
+    deriving(Show, Eq, Ord)
 
 
 newtype SymTab = SymTab{getTab :: Map.Map String String}

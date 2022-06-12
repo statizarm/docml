@@ -24,6 +24,10 @@ dependencies:
 - parsec
 - containers
 - mtl
+- graphviz
+- fgl
+- text
+- optparse-applicative
 
 library:
   source-dirs: src
