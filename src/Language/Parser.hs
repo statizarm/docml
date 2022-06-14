@@ -41,4 +41,4 @@ node = between blockOpenBrace blockCloseBrace node'
         node' = labelNode <$> tag <*> args <*> body
 
 parse :: Stream s m Char => s -> m (Either ParseError (AST LabeledNodeData))
-parse = runParserT (RootNode <$> body) () ""
+parse = runParserT (rootNode <$> body) () ""
