@@ -2,9 +2,6 @@
 {identifier CertificateResponse}
 {identifier post_handshake_auth}
 {identifier supported_versions}
-{identifier unexpected_message}
-{identifier unexpected_message}
-{identifier unexpected_message}
 {requirement
     {header section1.1.1}
 	A client that receives a {link CertificateRequst}
@@ -22,4 +19,3 @@
 	ClientHello, with the exception of optionally the "cookie" (see
 	{link section1.1.1}) extension.
 }
-

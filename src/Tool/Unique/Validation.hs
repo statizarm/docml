@@ -83,7 +83,7 @@ validate ast = let
 
 
 
-runUniqueTool :: (String -> Maybe s) -> UniqueOptions -> AST LabeledNodeData -> IO ()
+runUniqueTool :: (String -> Maybe String) -> UniqueOptions -> AST LabeledNodeData -> IO ()
 runUniqueTool f _ = either (printMultipleErrors h f) printResult . validate
     where
         h = stderr
