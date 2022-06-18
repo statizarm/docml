@@ -1,22 +1,27 @@
 module Main where
 
-import Options.Applicative
+
+import Options.Applicative hiding (reader, ParseError)
 import Data.Semigroup
+import qualified Data.Map as Map
 import Control.Monad
+import Control.Monad.Reader
 import Text.Parsec.Error
 
 import System.IO
 
-import Tool
-import Tool.Graph
-import Tool.Unique
+import Tool.Graph.Options
+import Tool.Graph.Dot
+import Tool.Unique.Validation
+import Tool.Unique.Options
+
 import Language.Parser
 import Language.AST
 
 
 data Options = Options {
     getToolCommand :: ToolCommand,
-    getSource :: String
+    getSources :: [String]
 } deriving(Show, Eq, Ord)
 
 
@@ -24,33 +29,26 @@ data ToolCommand = GraphCommand GraphOptions
                  | UniqueCommand UniqueOptions
     deriving(Show, Eq, Ord)
 
+
 buildGraph :: Parser ToolCommand
-buildGraph = GraphCommand <$> (
-        GraphOptions
-        <$> strOption
-        ( long "output"
-        <> short 'o'
-        <> value "stdout"
-        <> showDefault
-        )
-    )
+buildGraph = GraphCommand <$> graphOptionsParser
 
 
 checkUnique :: Parser ToolCommand
-checkUnique = pure (UniqueCommand UniqueOptions)
+checkUnique = UniqueCommand <$> uniqueOptionsParser
 
 
 options :: Parser Options
 options = Options
     <$> subparser
-        ( command "build-graph" (info (buildGraph <**> helper) (progDesc "build graph"))
+        ( command "build-graph" (info buildGraph (progDesc "build graph"))
         <> command "check-unique" (info checkUnique (progDesc "check uniqueness"))
         )
-    <*> argument str
-        ( metavar "FILE"
-        <> help "Source file"
-        <> value "stdin"
-        <> showDefault
+    <*> many (
+        argument str
+            ( metavar "FILE"
+            <> help "Source file"
+            )
         )
 
 
@@ -59,23 +57,22 @@ readFromSource "stdin" = getContents
 readFromSource fileName = readFile fileName
 
 
-getTool :: ToolCommand -> Tool
-getTool (GraphCommand opts) = GraphTool opts
-getTool (UniqueCommand opts) = UniqueTool opts
-
-
-printResult = putStrLn
+runSpecificTool :: ToolCommand -> AST LabeledNodeData -> Map.Map String String -> IO()
+runSpecificTool (GraphCommand options) ast _ = runGraphTool options ast
+runSpecificTool (UniqueCommand options) ast sourcesMap = runUniqueTool (sourcesMap Map.!?) options ast
 
 
 runCommand :: Options -> IO()
-runCommand options = readFromSource source >>= parse >>= runTool' >>= printResult
+runCommand options = do
+        sources <- traverse (\x -> (,) x <$> readFromSource x) $ getSources options
+        sourcesMap <- return . Map.fromList $ sources
+        ast <- parse sources
+        runTool' ast sourcesMap
     where
-        source = getSource options
         toolCommand = getToolCommand options
-        tool = getTool toolCommand
-        runTool' (Left error) = (return . show) error
-        runTool' (Right ast) = let res = runTool tool ast in case res of Left err -> return err
-                                                                         Right some -> return some
+        runTool' :: Either ParseError (AST LabeledNodeData) -> Map.Map String String -> IO ()
+        runTool' (Left error) _ = hPrint stderr error
+        runTool' (Right ast) sm = runSpecificTool toolCommand ast sm
 
 
 main :: IO ()

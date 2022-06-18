@@ -27,18 +27,20 @@ library
   exposed-modules:
       Language.AST
       Language.Parser
+      Language.SymbolTable
       Language.Token
-      Lib
-      Tool
-      Tool.Graph
-      Tool.Print
-      Tool.Unique
+      Tool.Graph.Dot
+      Tool.Graph.Options
+      Tool.Unique.Error
+      Tool.Unique.Options
+      Tool.Unique.Validation
   other-modules:
       Paths_docml
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      ansi-terminal
+    , base >=4.7 && <5
     , containers
     , fgl
     , graphviz
@@ -56,7 +58,8 @@ executable docml-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      ansi-terminal
+    , base >=4.7 && <5
     , containers
     , docml
     , fgl
@@ -76,7 +79,8 @@ test-suite docml-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      ansi-terminal
+    , base >=4.7 && <5
     , containers
     , docml
     , fgl

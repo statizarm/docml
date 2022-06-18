@@ -14,11 +14,13 @@ import Data.Functor
 
 import Data.Map (fromList)
 
+import Control.Monad.State
+
 text :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
-text = textNode <$> many1 (satisfy (\x -> x /= '{' && x /= '}'))
+text = textNode <$> getPosition <*> many1 (satisfy (\x -> x /= '{' && x /= '}')) <*> getPosition
 
 body :: Stream s m Char => ParsecT s u m [AST LabeledNodeData]
-body = many (node <|> text)
+body = many (spaces *> (node <|> text) <* spaces)
 
 tag :: Stream s m Char => ParsecT s u m String 
 tag = spaces $> getIdentifier <*> identifier 
@@ -38,7 +40,9 @@ keyValue = (,) <$> key <* eq <*> value
 node :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
 node = between blockOpenBrace blockCloseBrace node'
     where
-        node' = labelNode <$> tag <*> args <*> body
+        node' = labelNode <$> getPosition <*> tag <*> args <*> body <*> getPosition
 
-parse :: Stream s m Char => s -> m (Either ParseError (AST LabeledNodeData))
-parse = runParserT (rootNode <$> body) () ""
+parse :: (Stream s m Char) => [(String, s)] -> m (Either ParseError (AST LabeledNodeData))
+parse = fmap (fmap (rootNode . concat)) . foo
+    where
+        foo = (fmap sequence .) . traverse . uncurry $ runParserT body ()

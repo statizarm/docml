@@ -1,6 +1,9 @@
 module Language.AST (
     AST (..),
     NodeData (..),
+    Labeled (..),
+    PostOrderAST(..),
+    MetaAttributes(..),
     LabeledNodeData,
     rootNodeLabel,
     textNodeLabel,
@@ -12,15 +15,27 @@ module Language.AST (
 
 import qualified Data.Map.Lazy as Map
 import Prelude
+import qualified Text.Parsec as Parsec
 import Data.Traversable (foldMapDefault)
 
 
 type Attributes = Map.Map String String
 
 
+data MetaAttributes = MetaAttributes {
+    getSourceName  :: String,
+    getBeginLine   :: Int,
+    getBeginColumn :: Int,
+    getEndLine     :: Int,
+    getEndColumn   :: Int
+} deriving(Show, Eq, Ord)
+
+
 data NodeData = Attributes {
+    getMeta :: MetaAttributes,
     getAttributes :: Attributes
 } | Text {
+    getMeta :: MetaAttributes,
     getText :: String
 } | Empty {
 } deriving(Show, Eq, Ord)
@@ -48,14 +63,30 @@ data AST a = LabelNode {
 rootNodeLabel = "_RootNode_"
 textNodeLabel = "_TextNode_"
 
+
+fillMetaAttributes :: Parsec.SourcePos -> Parsec.SourcePos -> MetaAttributes
+fillMetaAttributes begin end =
+    MetaAttributes { getSourceName = Parsec.sourceName begin
+                   , getBeginLine = Parsec.sourceLine begin
+                   , getBeginColumn = Parsec.sourceColumn begin
+                   , getEndLine = Parsec.sourceLine end
+                   , getEndColumn = Parsec.sourceColumn end
+    }
+
 rootNode :: [AST LabeledNodeData] -> AST LabeledNodeData
 rootNode = LabelNode (Labeled rootNodeLabel Empty)
 
-textNode :: String -> AST LabeledNodeData
-textNode text = LabelNode (Labeled textNodeLabel (Text text)) []
+textNode :: Parsec.SourcePos -> String -> Parsec.SourcePos -> AST LabeledNodeData
+textNode beginPos text endPos = LabelNode (Labeled textNodeLabel text') []
+    where
+        meta = fillMetaAttributes beginPos endPos
+        text' = Text meta . unwords . words $ text
 
-labelNode :: String -> [(String, String)] -> [AST LabeledNodeData] -> AST LabeledNodeData
-labelNode = (LabelNode .) . (. Attributes . Map.fromList) . Labeled
+labelNode :: Parsec.SourcePos -> String -> [(String, String)] -> [AST LabeledNodeData] -> Parsec.SourcePos -> AST LabeledNodeData
+labelNode beginPos label attrs children endPos = let
+        meta = fillMetaAttributes beginPos endPos
+        attributes = Attributes meta . Map.fromList $ attrs
+    in LabelNode (Labeled label attributes) children
 
 
 instance Functor AST where
@@ -68,3 +99,18 @@ instance Foldable AST where
 
 instance Traversable AST where
     traverse f (LabelNode attr children) = LabelNode <$> f attr <*> sequenceA (traverse f <$> children)
+
+
+newtype PostOrderAST a = PostOrderAST {getAST :: AST a}
+
+
+instance Functor PostOrderAST where
+    fmap f (PostOrderAST ast) = PostOrderAST $ f <$> ast
+
+
+instance Foldable PostOrderAST where
+    foldMap = foldMapDefault
+
+
+instance Traversable PostOrderAST where
+    traverse f (PostOrderAST (LabelNode attr children)) = PostOrderAST <$> (flip LabelNode <$> traverse (traverse f) children <*> f attr)
