@@ -4,9 +4,9 @@
 {identifier supported_versions}
 {identifier unexpected_message}
 {requirement
-    {identifier section1.1.1}
+    {header section1.1.1}
 	A client that receives a {link CertificateRequest}
-	message without having sent the "{known_identifier post_handshake_auth}"
+	message without having sent the "{link post_handshake_auth}"
     extension MUST send an "{link unexpected_message}" fatal alert.
 }
 
@@ -20,5 +20,4 @@
 	ClientHello, with the exception of optionally the "cookie" (see
 	{link Section1.1.1}) extension.
 }
-
 

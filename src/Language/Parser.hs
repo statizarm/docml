@@ -14,11 +14,13 @@ import Data.Functor
 
 import Data.Map (fromList)
 
-text :: Stream s m Char => ParsecT s u m AST
-text = TextNode <$> many1 (satisfy (\x -> x /= '{' && x /= '}'))
+import Control.Monad.State
 
-body :: Stream s m Char => ParsecT s u m [AST]
-body = many (node <|> text)
+text :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
+text = textNode <$> getPosition <*> many1 (satisfy (\x -> x /= '{' && x /= '}')) <*> getPosition
+
+body :: Stream s m Char => ParsecT s u m [AST LabeledNodeData]
+body = many (spaces *> (node <|> text) <* spaces)
 
 tag :: Stream s m Char => ParsecT s u m String 
 tag = spaces $> getIdentifier <*> identifier 
@@ -35,10 +37,12 @@ keyValue = (,) <$> key <* eq <*> value
         value = spaces $> getValue <*> valueToken
         eq = spaces <* equals
 
-node :: Stream s m Char => ParsecT s u m AST
+node :: Stream s m Char => ParsecT s u m (AST LabeledNodeData)
 node = between blockOpenBrace blockCloseBrace node'
     where
-        node' = LabelNode <$> tag <*> (fromList <$> args) <*> body
+        node' = labelNode <$> getPosition <*> tag <*> args <*> body <*> getPosition
 
-parse :: Stream s m Char => s -> m (Either ParseError AST)
-parse = runParserT (RootNode <$> body) () ""
+parse :: (Stream s m Char) => [(String, s)] -> m (Either ParseError (AST LabeledNodeData))
+parse = fmap (fmap (rootNode . concat)) . foo
+    where
+        foo = (fmap sequence .) . traverse . uncurry $ runParserT body ()
