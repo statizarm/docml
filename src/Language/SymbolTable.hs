@@ -13,7 +13,7 @@ data SymbolPosition = SymbolPosition {
     getBeginPosition :: (NLine, NColumn),
     getEndPosition :: (NLine, NColumn),
     getSourceName :: String
-} deriving(Show, Eq, Ord)
+} deriving(Eq, Ord)
 
 
 data SymbolAttributes = SymbolAttributes {
@@ -44,3 +44,7 @@ symbolPosition nodeData = let
 
 emptySymbolPosition :: SymbolPosition
 emptySymbolPosition = SymbolPosition (0, 0) (0, 0) ""
+
+
+instance Show SymbolPosition where
+    show (SymbolPosition (l, c) _ n) = n ++ ":" ++ show l ++ ":" ++ show c

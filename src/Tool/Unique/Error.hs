@@ -6,6 +6,8 @@ import System.Console.ANSI
 import Data.Foldable
 
 import Language.SymbolTable
+
+import Tool.Error
 import Text.Printf (hPrintf)
 
 
@@ -17,32 +19,10 @@ data UniqueError =
     deriving(Show, Eq, Ord)
 
 
-formatPosition :: SymbolPosition -> String
-formatPosition (SymbolPosition (l, c) _ n) = n ++ ":" ++ show l ++ ":" ++ show c
-
-
-printSourceSegment :: Handle -> String -> SymbolPosition -> IO ()
-printSourceSegment h s pos = let
-        bl = fst (getBeginPosition pos) - 1
-        el = fst (getEndPosition pos)
-        lc = el - bl
-        ls = take lc . drop bl $ lines s
-        ls' = zip [bl .. el] ls
-        mns = length . show $ el
-        printLine :: (Int, String) -> IO ()
-        printLine (n, s) = do
-            hPrintf h ("%" ++ show mns ++ "d |\t") $ n + 1
-            hSetSGR h [SetColor Foreground Dull Blue]
-            hPutStrLn h s
-            hSetSGR h [Reset]
-    in do
-        mapM_ printLine ls'
-
-
 printUniqueError :: Handle -> (String -> Maybe String) -> UniqueError -> IO ()
 printUniqueError h f (UniqueError name newPos oldPos) = do
     hSetSGR h [SetConsoleIntensity BoldIntensity]
-    hPutStr h $ formatPosition newPos ++ " "
+    hPutStr h $ show newPos ++ " "
     hSetSGR h [Reset]
     hSetSGR h [SetColor Foreground Dull Red]
     hPutStr h "error: "
@@ -53,7 +33,7 @@ printUniqueError h f (UniqueError name newPos oldPos) = do
     hSetSGR h [Reset]
     hPutStrLn h " at"
     hSetSGR h [SetConsoleIntensity BoldIntensity]
-    hPutStrLn h $ formatPosition oldPos
+    hPrint h oldPos
     hSetSGR h [Reset]
     case f $ getSourceName oldPos of (Just s) -> printSourceSegment h s oldPos
                                      Nothing -> return ()

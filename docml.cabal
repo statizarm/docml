@@ -29,6 +29,7 @@ library
       Language.Parser
       Language.SymbolTable
       Language.Token
+      Tool.Error
       Tool.Graph.Dot
       Tool.Graph.Options
       Tool.Link.Check

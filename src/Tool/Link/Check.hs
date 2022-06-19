@@ -52,16 +52,18 @@ checkLinks isSymbol isLink ast = let
         st = getSymbolTable (\x -> isSymbol x || isLink x) ast
         log = execWriter $ Map.traverseWithKey check st
         check :: String -> Symbol -> Writer [LinkError] ()
-        check k s = when (any (isLink . getSymbolLabel) s) $ do
+        check k s = let 
+                linkSym = head . filter (isLink . getSymbolLabel) $ s
+            in when (any (isLink . getSymbolLabel) s) $ do
                 if all (isLink . getSymbolLabel) s then
-                    tell [unknownSymbolError k s]
+                    tell [unknownSymbolError k linkSym]
                 else when (length (filter (isSymbol . getSymbolLabel) s) > 1) $ do
-                    tell [multipleIdentifiers k s]
+                    tell [multipleIdentifiers k linkSym $ filter (isSymbol . getSymbolLabel) s]
     in if log == mempty then Right st else Left log
 
 
 runLinkTool :: (String -> Maybe String) -> LinkOptions -> AST LabeledNodeData -> IO ()
-runLinkTool f options = either (printMultipleErrors h) printResult . checkLinks isSymbol isLink
+runLinkTool f options = either (printMultipleErrors h f) printResult . checkLinks isSymbol isLink
     where
         h = stderr
         printResult = print
