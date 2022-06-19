@@ -12,8 +12,12 @@ import System.IO
 
 import Tool.Graph.Options
 import Tool.Graph.Dot
+
 import Tool.Unique.Validation
 import Tool.Unique.Options
+
+import Tool.Link.Options
+import Tool.Link.Check (runLinkTool)
 
 import Language.Parser
 import Language.AST
@@ -27,6 +31,7 @@ data Options = Options {
 
 data ToolCommand = GraphCommand GraphOptions
                  | UniqueCommand UniqueOptions
+                 | LinkCommand LinkOptions
     deriving(Show, Eq, Ord)
 
 
@@ -38,11 +43,16 @@ checkUnique :: Parser ToolCommand
 checkUnique = UniqueCommand <$> uniqueOptionsParser
 
 
+checkLinks :: Parser ToolCommand
+checkLinks = LinkCommand <$> linkOptionsParser
+
+
 options :: Parser Options
 options = Options
     <$> subparser
         ( command "build-graph" (info buildGraph (progDesc "build graph"))
         <> command "check-unique" (info checkUnique (progDesc "check uniqueness"))
+        <> command "check-links" (info checkLinks (progDesc "check links"))
         )
     <*> many (
         argument str
@@ -60,6 +70,7 @@ readFromSource fileName = readFile fileName
 runSpecificTool :: ToolCommand -> AST LabeledNodeData -> Map.Map String String -> IO()
 runSpecificTool (GraphCommand options) ast _ = runGraphTool options ast
 runSpecificTool (UniqueCommand options) ast sourcesMap = runUniqueTool (sourcesMap Map.!?) options ast
+runSpecificTool (LinkCommand options) ast sourcesMap = runLinkTool (sourcesMap Map.!?) options ast
 
 
 runCommand :: Options -> IO()

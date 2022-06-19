@@ -10,6 +10,7 @@ module Language.AST (
     rootNode,
     labelNode,
     textNode,
+    nestedTraverse,
 ) where
 
 
@@ -87,6 +88,10 @@ labelNode beginPos label attrs children endPos = let
         meta = fillMetaAttributes beginPos endPos
         attributes = Attributes meta . Map.fromList $ attrs
     in LabelNode (Labeled label attributes) children
+
+
+nestedTraverse :: Monad m => (AST a -> m b) -> AST a -> m (AST b)
+nestedTraverse f ast@(LabelNode _ c) = LabelNode <$> f ast <*> traverse (nestedTraverse f) c
 
 
 instance Functor AST where

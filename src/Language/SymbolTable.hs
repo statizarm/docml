@@ -13,7 +13,7 @@ data SymbolPosition = SymbolPosition {
     getBeginPosition :: (NLine, NColumn),
     getEndPosition :: (NLine, NColumn),
     getSourceName :: String
-} deriving(Show, Eq, Ord)
+} deriving(Eq, Ord)
 
 
 data SymbolAttributes = SymbolAttributes {
@@ -22,16 +22,11 @@ data SymbolAttributes = SymbolAttributes {
 } deriving(Show, Eq, Ord)
 
 
-type SymbolTable = Map.Map String SymbolAttributes
+type SymbolTable a = Map.Map String a
 
 
-localSymbolTable :: Monad m => (AST LabeledNodeData -> m SymbolTable) -> AST LabeledNodeData -> m (AST (LabeledNodeData, SymbolTable))
-localSymbolTable f ast@(LabelNode nodeData children) = LabelNode . (,) nodeData <$> f ast <*> foo
-    where foo = traverse (localSymbolTable f) children
-
-
-makeSymbolTable :: LabeledNodeData -> String -> SymbolTable
-makeSymbolTable v n = Map.fromList [(n, symbolAttributes v)]
+localSymbolTable :: Monad m => (AST LabeledNodeData -> m (SymbolTable a)) -> AST LabeledNodeData -> m (AST (LabeledNodeData, SymbolTable a))
+localSymbolTable f = nestedTraverse (\ast@(LabelNode v _) -> (,) v <$> f ast)
 
 
 symbolAttributes :: LabeledNodeData -> SymbolAttributes
@@ -49,3 +44,7 @@ symbolPosition nodeData = let
 
 emptySymbolPosition :: SymbolPosition
 emptySymbolPosition = SymbolPosition (0, 0) (0, 0) ""
+
+
+instance Show SymbolPosition where
+    show (SymbolPosition (l, c) _ n) = n ++ ":" ++ show l ++ ":" ++ show c

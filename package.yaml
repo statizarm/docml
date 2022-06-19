@@ -29,6 +29,7 @@ dependencies:
 - text
 - optparse-applicative
 - ansi-terminal
+- split
 
 library:
   source-dirs: src
