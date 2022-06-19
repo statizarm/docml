@@ -39,8 +39,8 @@ printSourceSegment h s pos = let
         mapM_ printLine ls'
 
 
-printSingleError :: Handle -> (String -> Maybe String) -> UniqueError -> IO ()
-printSingleError h f (UniqueError name newPos oldPos) = do
+printUniqueError :: Handle -> (String -> Maybe String) -> UniqueError -> IO ()
+printUniqueError h f (UniqueError name newPos oldPos) = do
     hSetSGR h [SetConsoleIntensity BoldIntensity]
     hPutStr h $ formatPosition newPos ++ " "
     hSetSGR h [Reset]
@@ -59,6 +59,5 @@ printSingleError h f (UniqueError name newPos oldPos) = do
                                      Nothing -> return ()
 
 
-
-printMultipleErrors :: Foldable t => Handle -> (String -> Maybe String) -> t UniqueError -> IO ()
-printMultipleErrors = (traverse_ .) . printSingleError 
+printMultipleUniqueErrors :: Foldable t => Handle -> (String -> Maybe String) -> t UniqueError -> IO ()
+printMultipleUniqueErrors = (traverse_ .) . printUniqueError 

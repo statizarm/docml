@@ -1,5 +1,6 @@
 module Tool.Unique.Validation (
     runUniqueTool,
+    getSymbolTable,
 ) where
 
 
@@ -13,26 +14,15 @@ import Data.Semigroup (Semigroup)
 
 import Language.AST
 import Language.SymbolTable
-import Tool.Unique.Error (UniqueError (UniqueError), printMultipleErrors)
-import Tool.Unique.Options (UniqueOptions)
+
+import Tool.Unique.Error (UniqueError (UniqueError), printMultipleUniqueErrors)
+import Tool.Unique.Options (UniqueOptions (UniqueOptions, getIdentifierTags))
+import Tool.Unique.Symbol (makeSymbolTable)
 
 
-identifierLabel :: String
-identifierLabel = "identifier"
-
-headerLabel :: String
-headerLabel = "header"
-
-
-isDeclareIdentifierLabel :: String -> Bool
-isDeclareIdentifierLabel label = label `elem` labels
-    where
-        labels = [identifierLabel, headerLabel]
-
-
-updateSymTab :: (LabeledNodeData, SymbolTable) -> StateT SymbolTable (Writer [UniqueError]) ()
+updateSymTab :: (LabeledNodeData, SymbolTable SymbolAttributes) -> StateT (SymbolTable SymbolAttributes) (Writer [UniqueError]) ()
 updateSymTab (d, tab) = let
-        createError :: SymbolTable -> SymbolTable -> String -> UniqueError
+        createError :: SymbolTable SymbolAttributes -> SymbolTable SymbolAttributes -> String -> UniqueError
         createError oldTab newTab name = let
                 message = name
                 oldPos = getSymbolPosition $ oldTab Map.! name
@@ -47,11 +37,11 @@ updateSymTab (d, tab) = let
             tell $ foldr ((:) . createError oldTab tab) [] (Map.keys int)
 
 
-astSymbol :: AST LabeledNodeData -> Writer [UniqueError] SymbolTable
-astSymbol ast@(LabelNode v c) = let
+astSymbol :: (String -> Bool) -> AST LabeledNodeData -> Writer [UniqueError] (SymbolTable SymbolAttributes)
+astSymbol isSymbol ast@(LabelNode v c) = let
         l = getLabel v
     in
-        if isDeclareIdentifierLabel l then
+        if isSymbol l then
             makeSymbolTable v <$> foldr getSymbol (return mempty) (rootNode c)
         else
             return mempty
@@ -67,15 +57,17 @@ astSymbol ast@(LabelNode v c) = let
                     return id
 
 
-validate :: AST LabeledNodeData -> Either [UniqueError] ()
-validate ast = let
-        (ast', log) = runWriter $ localSymbolTable astSymbol ast
+getSymbolTable :: (String -> Bool) -> AST LabeledNodeData -> Either [UniqueError] (SymbolTable SymbolAttributes)
+getSymbolTable isSymbol ast = let
+        (ast', log) = runWriter $ localSymbolTable (astSymbol isSymbol) ast
         ast'' = PostOrderAST ast'
-        log' = execWriter $ execStateT (mapM_ updateSymTab ast'') mempty
+        st = runStateT (mapM_ updateSymTab ast'') mempty
+        log' = execWriter st
+        symTab = snd . fst. runWriter $ st
     in
         if log == mempty then
             if log' == mempty then
-                Right ()
+                Right symTab
             else
                 Left log'
         else
@@ -83,8 +75,13 @@ validate ast = let
 
 
 
+getSymbolPredicate :: UniqueOptions -> String -> Bool
+getSymbolPredicate = flip elem . getIdentifierTags
+
+
 runUniqueTool :: (String -> Maybe String) -> UniqueOptions -> AST LabeledNodeData -> IO ()
-runUniqueTool f _ = either (printMultipleErrors h f) printResult . validate
+runUniqueTool f options = either (printMultipleUniqueErrors h f) printResult . getSymbolTable predicate
     where
         h = stderr
         printResult _ = putStrLn "ok"
+        predicate = getSymbolPredicate options

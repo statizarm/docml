@@ -5,7 +5,7 @@
 {identifier unexpected_message}
 {requirement
     {header section1.1.1}
-	A client that receives a {link CertificateRequst}
+	A client that receives a {link CertificateRequest}
 	message without having sent the "{link post_handshake_auth}" extension
     MUST send an "{link unexpected_message}" fatal alert.
 }
