@@ -118,4 +118,8 @@ instance Foldable PostOrderAST where
 
 
 instance Traversable PostOrderAST where
-    traverse f (PostOrderAST (LabelNode attr children)) = PostOrderAST <$> (flip LabelNode <$> traverse (traverse f) children <*> f attr)
+    traverse f (PostOrderAST (LabelNode attr children)) = PostOrderAST <$>
+        (flip LabelNode <$>
+            ((getAST <$>) <$> traverse (traverse f) (PostOrderAST <$> children))
+            <*> f attr
+        )

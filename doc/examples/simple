@@ -1,0 +1,4 @@
+{requirement
+    {identifier [id="1"] Зеленый} это цвет.
+    {identifier Красный} это не {link Зеленый}.
+}
